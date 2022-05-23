@@ -21,7 +21,7 @@ public record CustomerService(CustomerRepository customerRepository, RestTemplat
         // TODO: check if fields are valid.
         // TODO: check fraudster
         FraudCheckResponse fraudCheckResponse = restTemplate.getForObject(
-                "http:localhost:8081/api/v1/fraud-check/{customerId}",
+                "http://localhost:8081/api/v1/fraud-check/{customerId}",
                 FraudCheckResponse.class,
                 customer.getId()
         );

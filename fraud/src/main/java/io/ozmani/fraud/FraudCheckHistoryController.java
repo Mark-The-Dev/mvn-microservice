@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/v1/fraud-check")
+@RequestMapping("api/v1/fraud-check/")
 public class FraudCheckHistoryController {
 
     private final FraudCheckHistoryService fraudCheckHistoryService;
