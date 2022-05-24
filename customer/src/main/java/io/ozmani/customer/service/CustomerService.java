@@ -1,14 +1,19 @@
 package io.ozmani.customer.service;
 
+import io.ozmani.clients.fraud.FraudCheckResponse;
+import io.ozmani.clients.fraud.FraudClient;
 import io.ozmani.customer.domain.CustomerRegistrationRequest;
-import io.ozmani.customer.domain.FraudCheckResponse;
 import io.ozmani.customer.entity.Customer;
 import io.ozmani.customer.repository.CustomerRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Service
-public record CustomerService(CustomerRepository customerRepository, RestTemplate restTemplate) {
+@RequiredArgsConstructor
+public class CustomerService {
+
+    private final CustomerRepository customerRepository;
+    private final FraudClient fraudClient;
 
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
@@ -20,12 +25,8 @@ public record CustomerService(CustomerRepository customerRepository, RestTemplat
         customerRepository.saveAndFlush(customer);
         // TODO: check if fields are valid.
         // TODO: check fraudster
-        FraudCheckResponse fraudCheckResponse = restTemplate.getForObject(
-                // "http://localhost:8081/api/v1/fraud-check/{customerId}",
-                "http://FRAUD/api/v1/fraud-check/{customerId}",
-                FraudCheckResponse.class,
-                customer.getId()
-        );
+        FraudCheckResponse fraudCheckResponse =
+                fraudClient.isFraudster(customer.getId());
 
         assert fraudCheckResponse != null;
         if (fraudCheckResponse.isFraudster()) {
