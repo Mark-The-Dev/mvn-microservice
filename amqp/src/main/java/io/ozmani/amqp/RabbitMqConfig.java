@@ -2,6 +2,7 @@ package io.ozmani.amqp;
 
 import lombok.AllArgsConstructor;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -15,11 +16,27 @@ public class RabbitMqConfig {
 
     private final ConnectionFactory connectionFactory;
 
+    /**
+     * Configures template, allows us to send messages to queue.
+     * @return Advanced Message Queue Protocol Template.
+     */
     @Bean
     public AmqpTemplate amqpTemplate() {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jacksonConverter());
         return rabbitTemplate;
+    }
+
+    /**
+     * Allows us to view messages from the queue.
+     * @return Rabbit Listener Factory.
+     */
+    @Bean
+    public SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory() {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jacksonConverter());
+        return factory;
     }
 
     @Bean
