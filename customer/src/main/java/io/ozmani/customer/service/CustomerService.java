@@ -1,10 +1,11 @@
 package io.ozmani.customer.service;
 
+import io.ozmani.amqp.RabbitMQMessageProducer;
 import io.ozmani.clients.fraud.FraudCheckResponse;
 import io.ozmani.clients.fraud.FraudClient;
 import io.ozmani.clients.notification.NotificationClient;
 import io.ozmani.clients.notification.NotificationRequest;
-import io.ozmani.clients.notification.NotificationResponse;
+import io.ozmani.customer.CustomerConfig;
 import io.ozmani.customer.domain.CustomerRegistrationRequest;
 import io.ozmani.customer.entity.Customer;
 import io.ozmani.customer.repository.CustomerRepository;
@@ -20,6 +21,8 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final FraudClient fraudClient;
     private final NotificationClient notificationClient;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
+    private final CustomerConfig customerConfig;
 
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
@@ -38,10 +41,19 @@ public class CustomerService {
         if (fraudCheckResponse.isFraudster()) {
             throw new IllegalStateException("This user is a fraudster!");
         }
-        // TODO: send notification
-        NotificationRequest notificationRequest = new NotificationRequest(customer.getId(), "Welcome to " +
-                "Ozmani Services, we are happy to have you!", customer.getEmail());
-        NotificationResponse notificationResponse = notificationClient.publishNotification(notificationRequest);
+        NotificationRequest notificationRequest = new NotificationRequest(customer.getId(),
+                String.format("Hi %s Welcome to Ozmani Services!", customer.getFirstName()),
+                customer.getEmail());
+
+        // send with open-feign.
+        // notificationClient.publishNotification(notificationRequest);
+
+        rabbitMQMessageProducer.publish(
+                notificationRequest,
+                customerConfig.getInternalExchange(),
+                customerConfig.getInternalNotificationRoutingKey()
+        );
+
         log.info("notification response received for: {}",customer.getId());
     }
 }
